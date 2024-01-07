@@ -1,5 +1,6 @@
 import locale
 from datetime import datetime, timedelta
+from docx import Document
 
 class DataProcessor:    
     def __init__(self, data, template_text):
@@ -16,11 +17,14 @@ class DataProcessor:
     
     def load_template_text(self):
         try:
-            with open(self.template_text, 'r') as file:
-                template = file.read()
-        except: 
-            raise FileNotFoundError
-        return template
+            doc_path = self.template_text  # Supondo que self.template_text seja o caminho para o arquivo .docx
+            doc = Document(doc_path)
+
+            text = "\n".join([para.text for para in doc.paragraphs])
+
+            return text
+        except FileNotFoundError:
+            raise FileNotFoundError("Arquivo não encontrado.")
     
     def generate_customer_report(self, customer_data):
         template_text = self.load_template_text()
