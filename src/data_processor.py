@@ -17,7 +17,7 @@ class DataProcessor:
     
     def load_template_text(self):
         try:
-            doc_path = self.template_text  # Supondo que self.template_text seja o caminho para o arquivo .docx
+            doc_path = self.template_text
             doc = Document(doc_path)
 
             text = "\n".join([para.text for para in doc.paragraphs])
@@ -29,7 +29,7 @@ class DataProcessor:
     def generate_customer_report(self, customer_data):
         template_text = self.load_template_text()
         periodo = self.get_previous_month()
-        nome = str(customer_data['Nome']).capitalize()
+        nome = str(customer_data['Nome completo']).capitalize()
         rentabilidade_mes = round((customer_data['Rentabilidade mês']), 2)
         cdi = round((customer_data['% CDI']), 2)
         balanco = round((customer_data['Lucro/Prejuízo']), 2)
