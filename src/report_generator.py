@@ -14,9 +14,11 @@ class ReportGenerator:
                 advisor = row['Assessor']
                 data_processor = DataProcessor(self.data, self.template_text)
                 client_text = data_processor.generate_customer_report(row)
-                client_name = row['Nome']
+                client_name = row['Nome completo']
                 client_folder = os.path.join(self.output_folder, str(advisor))
+
                 os.makedirs(client_folder, exist_ok=True)
+
                 client_file_path = os.path.join(
                     client_folder,
                     f"{client_name}.docx"
