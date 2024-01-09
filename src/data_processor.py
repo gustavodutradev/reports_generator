@@ -29,7 +29,7 @@ class DataProcessor:
     def generate_customer_report(self, customer_data):
         template_text = self.load_template_text()
         periodo = self.get_previous_month()
-        nome = str(customer_data['Nome completo']).capitalize()
+        nome = customer_data['Nome completo'].capitalize()
         rentabilidade_mes = round((customer_data['Rentabilidade mês']), 2)
         cdi = round((customer_data['% CDI']), 2)
         balanco = round((customer_data['Lucro/Prejuízo']), 2)
