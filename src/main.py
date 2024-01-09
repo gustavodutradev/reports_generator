@@ -1,20 +1,11 @@
 from data_reader import DataReader
 from report_generator import ReportGenerator
+import sys
 import time
 
-def main():
-
-    # file_path = "C:\\Users\\gusta\\OneDrive\\Área de Trabalho\\dados.xlsx"
-    file_path = input("Digite o caminho completo para o arquivo de dados: ")
-
-    # output_folder = "C:\\Users\\gusta\\OneDrive\\Área de Trabalho\\relatorios"
-
-    output_folder = input("Digite o caminho completo para a pasta de saída dos relatórios: ")
-    
-    # template_text = "C:\\Users\\gusta\\OneDrive\\Documentos\\template.docx"
-    template_text = input("Digite o caminho completo para o template: ")
-    
+def main(file_path, output_folder, template_text):
     start_time = time.time()
+    
     data_reader = DataReader(file_path)
     data = data_reader.read_data()
 
@@ -23,7 +14,11 @@ def main():
 
     print(f"Tempo de execução: {round(time.time() - start_time, 3)} segundos.")
 
-    input("Pressione ENTER para sair.")
-
 if __name__ == '__main__':
-    main()
+    try:
+        output_folder = sys.argv[1]
+        template_text = sys.argv[2]
+        file_path = sys.argv[3]
+        main(file_path, output_folder, template_text)
+    except IndexError:
+        print("Argumentos inválidos")
