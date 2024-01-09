@@ -10,26 +10,32 @@ class ReportGenerator:
     
     def save_report(self):
         if self.data is not None:
-            for _, row in self.data.iterrows():
-                advisor = row['Assessor']
-                data_processor = DataProcessor(self.data, self.template_text)
-                client_text = data_processor.generate_customer_report(row)
-                client_name = row['Nome completo']
-                client_folder = os.path.join(self.output_folder, str(advisor))
+            try:
+                for _, row in self.data.iterrows():
+                    advisor = row['Assessor']
+                    data_processor = DataProcessor(self.data, self.template_text)
+                    client_text = data_processor.generate_customer_report(row)
+                    client_name = row['Nome completo']
+                    client_folder = os.path.join(self.output_folder, str(advisor))
 
-                os.makedirs(client_folder, exist_ok=True)
+                    os.makedirs(client_folder, exist_ok=True)
 
-                client_file_path = os.path.join(
-                    client_folder,
-                    f"{client_name}.docx"
-                )
-                doc = Document()
-                
-                paragraph = doc.add_paragraph()
-                run = paragraph.add_run(client_text)
-                font = run.font
-                font.name = 'Arial'
+                    client_file_path = os.path.join(
+                        client_folder,
+                        f"{client_name}.docx"
+                    )
+                    doc = Document()
 
-                doc.save(client_file_path)
+                    paragraph = doc.add_paragraph()
+                    run = paragraph.add_run(client_text)
+                    font = run.font
+                    font.name = 'Arial'
+
+                    doc.save(client_file_path)
+
+            except FileNotFoundError:
+                raise FileNotFoundError("Arquivo não encontrado.")
+        else:
+            raise ValueError("Dados não encontrados no arquivo.")
 
         print("Relatórios gerados com sucesso!")
