@@ -11,21 +11,37 @@ class ReportGenerator:
     def save_report(self):
         if self.data is not None:
             try:
-                for _, row in self.data.iterrows():
-                    advisor = row['Assessor']
+                existing_files = {}
+                for item in self.data:
+
+                    advisor = item['Assessor']
                     data_processor = DataProcessor(self.data, self.template_text)
-                    client_text = data_processor.generate_customer_report(row)
-                    client_name = row['Nome completo']
-                    client_folder = os.path.join(self.output_folder, str(advisor))
+                    client_text = data_processor.generate_customer_report(item)
+                    client_name = item['Nome completo']
+                    client_account = item['Conta']
 
-                    os.makedirs(client_folder, exist_ok=True)
+                    periodo = data_processor.get_reference_date()
+                    ano_referencia = periodo[1]
+                    mes_referencia_numero = periodo[2]
 
-                    client_file_path = os.path.join(
-                        client_folder,
-                        f"{client_name}.docx"
-                    )
+                    # Criar a estrutura de pastas por assessor e período (mês e ano)
+                    advisor_folder = os.path.join(self.output_folder, str(advisor))
+                    periodo_folder = os.path.join(advisor_folder, f"{ano_referencia}.{mes_referencia_numero}")
+                    os.makedirs(periodo_folder, exist_ok=True)
+
+                    client_file_name = f"{client_name}_Performance_{ano_referencia}_{mes_referencia_numero}.docx"
+
+
+                    if client_file_name in existing_files:
+
+                        client_file_name = f"{client_name}_Performance_{client_account}_{ano_referencia}_{mes_referencia_numero}.docx"
+
+
+                    existing_files[client_file_name] = True
+
+                    client_file_path = os.path.join(periodo_folder, client_file_name)
+
                     doc = Document()
-
                     paragraph = doc.add_paragraph()
                     run = paragraph.add_run(client_text)
                     font = run.font
