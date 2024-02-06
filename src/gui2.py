@@ -29,47 +29,55 @@ def mainGUI(page: Page):
     page.title = "TOPINV - Gerador de Relatórios"
     page.window_resizable = False
     page.window_width = 300
-    page.window_height = 500
+    page.window_height = 380
     page.vertical_alignment = "center"
     page.update()
 
     def pick_template_result(e: FilePickerResultEvent):
         if template_picker.result.files[0] != None and template_picker.result.files != None:
             template_path = template_picker.result.files[0].path
-            verify(e, template_path, "Template", "o")
+            verify(template_path, "Template", "o")
             return template_path
 
     def pick_sheet_result(e: FilePickerResultEvent):
         if sheet_picker.result.files[0] != None:
             sheet_path = sheet_picker.result.files[0].path
-            verify(e, sheet_path, "Planilha", "a")
+            verify(sheet_path, "Planilha", "a")
             return sheet_path
 
     def pick_destination_folder_result(e: FilePickerResultEvent):
         if e.path:
             destination_folder_picker.value = e.path
-            verify(e, destination_folder_picker.value, "Pasta de destino", "a")
+            verify(destination_folder_picker.value, "Pasta de destino", "a")
             return destination_folder_picker.value
+        
+    def open_Snack_Bar(page: Page, message: str, bgcolor: str):
+        page.snack_bar = SnackBar(Text(message), bgcolor=bgcolor)
+        page.snack_bar.open = True
+        page.update()
     
     def start_process():
         try:
+            open_Snack_Bar(page, "Criando relatórios...", bgcolor="blue")
             progress = progress_ring(page)
             progress()
             main(sheet_picker.result.files[0].path, destination_folder_picker.value, template_picker.result.files[0].path)
             sleep(1)
             del progress
+            open_Snack_Bar(page, "Relatórios criados com sucesso!", bgcolor="green")
         except Exception:
-            print("error")
+            sleep(1)
+            del progress
+            open_Snack_Bar(page, "Ocorreu um erro ao criar os relatórios. Tente novamente.", bgcolor="red")
+            
 
-    def verify(e, selected_file, type: str, char: str):
+    def verify(selected_file, type: str, char: str):
         if selected_file != None:
             txt.value = f"{type} selecionad{char}!"
         else:
             txt.value = "Houve um erro ao selecionar o arquivo. Tente novamente."
 
-        e.control.page.snack_bar = SnackBar(Text(f"{txt.value}"))
-        e.control.page.snack_bar.open = True
-        e.control.page.update()
+        open_Snack_Bar(page, txt.value, bgcolor="blue")
 
     txt = Text("")
 
