@@ -1,6 +1,7 @@
 import locale
 from datetime import datetime, timedelta
 from docx import Document
+import pandas as pd
 
 class DataProcessor:    
     def __init__(self, data, template_text=None):
@@ -12,6 +13,7 @@ class DataProcessor:
         today = datetime.now()
         first_day = today.replace(day=1)
         previous_month = first_day - timedelta(days=1)
+        mes_referencia = previous_month.month
         month_string = previous_month.strftime('%B')
 
         ano_atual = today.year
@@ -44,30 +46,42 @@ class DataProcessor:
         template_text = self.load_template_text()
 
         periodo = self.get_reference_date()[0]
-        reference_month_number = self.get_reference_date()[2]
+        # reference_month_number = self.get_reference_date()[2]
 
-        if reference_month_number == 1:
-            rentabilidade_mes = float(customer_data['Rentabilidade']) if customer_data['Rentabilidade'] is not None else None
-            balanco_mes = self.format_BRL_currency(float(customer_data['Lucro/Prejuízo'])) if customer_data['Lucro/Prejuízo'] is not None else None
-        else:
-            rentabilidade_mes = float(customer_data[f'Rentabilidade.{reference_month_number - 1}'] * 100) if customer_data[f'Rentabilidade.{reference_month_number - 1}'] is not None else None
-            balanco_mes = self.format_BRL_currency(customer_data[f'Lucro/Prejuízo.{reference_month_number - 1}'])
-        
-        nome = customer_data['Nome'].capitalize()
-        performance_cdi_ultimo_mes = float(customer_data['Performance X CDI (Último mês)'] * 100) if customer_data['Performance X CDI (Último mês)'] is not None else None
-        
-        rentabilidade_acumulada = float(customer_data['Rentabilidade.12'] * 100) if customer_data['Rentabilidade.12'] is not None else None
-        performance_cdi_acumulada = float(customer_data['Performance X CDI (12 meses)'] * 100) if customer_data['Performance X CDI (12 meses)'] is not None else None
-        balanco_acumulado = self.format_BRL_currency(customer_data['Lucro/Prejuízo.12']) if customer_data['Lucro/Prejuízo.12'] is not None else None
+        # rentabilidade_mes_key = f'Rentabilidade.{reference_month_number - 1}' if reference_month_number != 1 else 'Rentabilidade'
+        rentabilidade_mes_key = 'Rentabilidade.11'
+        rentabilidade_mes = customer_data.get(rentabilidade_mes_key, 0)
+
+        # balanco_mes_key = f'Lucro/Prejuízo.{reference_month_number - 1}' if reference_month_number != 1 else 'Lucro/Prejuízo'
+        balanco_mes_key = 'Lucro/Prejuízo.11'
+        balanco_mes = customer_data.get(balanco_mes_key, 0)
+
+        performance_cdi_ultimo_mes = customer_data.get('Performance X CDI (Último mês)', 0)
+
+        rentabilidade_acumulada = customer_data.get('Rentabilidade.12', 0)
+        performance_cdi_acumulada = customer_data.get('Performance X CDI (12 meses)', 0)
+        balanco_acumulado = customer_data.get('Lucro/Prejuízo.12', 0)
+
+        nome = customer_data.get('Nome', '').capitalize()
+        performance_cdi_ultimo_mes *= 100  # Multiplicação por 100 aqui
+        performance_cdi_acumulada *= 100
+
+        # Verifica se os valores não são None antes de converter para float
+        rentabilidade_mes = float(rentabilidade_mes) if rentabilidade_mes is not None else 0
+        balanco_mes = float(balanco_mes) if balanco_mes is not None else 0
+        performance_cdi_ultimo_mes = float(performance_cdi_ultimo_mes) if performance_cdi_ultimo_mes is not None else 0
+        rentabilidade_acumulada = float(rentabilidade_acumulada) if rentabilidade_acumulada is not None else 0
+        performance_cdi_acumulada = float(performance_cdi_acumulada) if performance_cdi_acumulada is not None else 0
+        balanco_acumulado = float(balanco_acumulado) if balanco_acumulado is not None else 0
 
         text = template_text.format(
             nome=nome,
             periodo=periodo,
-            rentabilidade_mes=round(rentabilidade_mes, 2),
-            performance_cdi_ultimo_mes = round(performance_cdi_ultimo_mes, 2),
-            balanco_mes=balanco_mes,
-            rentabilidade_acumulada=round(rentabilidade_acumulada, 2),
-            performance_cdi_acumulada=round(performance_cdi_acumulada, 2),
-            balanco_acumulado=balanco_acumulado
+            rentabilidade_mes=round(float(rentabilidade_mes) * 100, 2),
+            performance_cdi_ultimo_mes=round(float(performance_cdi_ultimo_mes), 2),
+            balanco_mes=self.format_BRL_currency(float(balanco_mes)),
+            rentabilidade_acumulada=round(float(rentabilidade_acumulada) * 100, 2),
+            performance_cdi_acumulada=round(float(performance_cdi_acumulada), 2),
+            balanco_acumulado=self.format_BRL_currency(float(balanco_acumulado))
         )
         return text
