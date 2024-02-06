@@ -1,6 +1,7 @@
 import os
 from data_processor import DataProcessor
 from docx import Document
+import pandas as pd
 
 class ReportGenerator:
     def __init__(self, output_folder, template_text, data):
@@ -12,8 +13,10 @@ class ReportGenerator:
         if self.data is not None:
             try:
                 existing_files = {}
-                for item in self.data:
-
+                for index, item in self.data.iterrows():
+                    if not isinstance(item, pd.Series):
+                        continue
+                    
                     advisor = item['Assessor']
                     data_processor = DataProcessor(self.data, self.template_text)
                     client_text = data_processor.generate_customer_report(item)
