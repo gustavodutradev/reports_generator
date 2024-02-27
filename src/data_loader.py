@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 class DataLoader:
     def __init__(self, file_path):
@@ -11,6 +12,8 @@ class DataLoader:
                 self.data = pd.read_excel(self.file_path, header=1)
             else:
                 raise ValueError("Formato de arquivo não suportado. Use CSV ou Excel (xlsx)")
+            
+            self.data = self.data.replace([np.nan], 0)
         
         except FileNotFoundError:
             raise FileNotFoundError("Arquivo não encontrado.")
