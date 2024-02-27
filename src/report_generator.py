@@ -77,8 +77,6 @@ class ReportGenerator:
                     data_processor = DataProcessor(self.data, self.template_text)
                     client_text = data_processor.generate_customer_report(item)
                     client_account = str(item['Conta']).split('.')[0]
-                    print(client_account)
-                    print(type(client_account))
 
                     periodo = data_processor.get_reference_date()
                     ano_referencia = periodo[1]
