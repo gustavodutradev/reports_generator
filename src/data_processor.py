@@ -7,7 +7,7 @@ class DataProcessor:
     def __init__(self, data, template_text=None):
         self.template_text = template_text
         self.data = data
-    
+
     def get_reference_date(self):
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         today = datetime.now()
@@ -46,13 +46,10 @@ class DataProcessor:
         template_text = self.load_template_text()
 
         periodo = self.get_reference_date()[0]
-        # reference_month_number = self.get_reference_date()[2]
 
-        # rentabilidade_mes_key = f'Rentabilidade.{reference_month_number - 1}' if reference_month_number != 1 else 'Rentabilidade'
         rentabilidade_mes_key = 'Rentabilidade.11'
         rentabilidade_mes = customer_data.get(rentabilidade_mes_key, 0)
 
-        # balanco_mes_key = f'Lucro/Prejuízo.{reference_month_number - 1}' if reference_month_number != 1 else 'Lucro/Prejuízo'
         balanco_mes_key = 'Lucro/Prejuízo.11'
         balanco_mes = customer_data.get(balanco_mes_key, 0)
 
@@ -62,12 +59,10 @@ class DataProcessor:
         performance_cdi_acumulada = customer_data.get('Performance X CDI (12 meses)', 0)
         balanco_acumulado = customer_data.get('Lucro/Prejuízo.12', 0)
 
-        nome = customer_data.get('Nome', '').capitalize()
-        performance_cdi_ultimo_mes *= 100  # Multiplicação por 100 aqui
+        nome = str(customer_data.get('Nome', '')).capitalize()
+        performance_cdi_ultimo_mes *= 100
         performance_cdi_acumulada *= 100
 
-        # Verifica se os valores não são None antes de converter para float
-        rentabilidade_mes = float(rentabilidade_mes) if rentabilidade_mes is not None else 0
         balanco_mes = float(balanco_mes) if balanco_mes is not None else 0
         performance_cdi_ultimo_mes = float(performance_cdi_ultimo_mes) if performance_cdi_ultimo_mes is not None else 0
         rentabilidade_acumulada = float(rentabilidade_acumulada) if rentabilidade_acumulada is not None else 0
