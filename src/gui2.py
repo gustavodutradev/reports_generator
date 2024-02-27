@@ -34,50 +34,54 @@ def mainGUI(page: Page):
     page.update()
 
     def pick_template_result(e: FilePickerResultEvent):
-        if template_picker.result.files[0] != None and template_picker.result.files != None:
+        try:
             template_path = template_picker.result.files[0].path
             verify(template_path, "Template", "o")
             return template_path
+        except Exception:
+            open_Snack_Bar(page, "Houve um erro ao selecionar o template. Tente novamente.", bgcolor="orange")
 
     def pick_sheet_result(e: FilePickerResultEvent):
-        if sheet_picker.result.files[0] != None:
+        try:
             sheet_path = sheet_picker.result.files[0].path
             verify(sheet_path, "Planilha", "a")
             return sheet_path
+        except Exception:
+            open_Snack_Bar(page, "Houve um erro ao selecionar a planilha. Tente novamente.", bgcolor="orange")
 
     def pick_destination_folder_result(e: FilePickerResultEvent):
-        if e.path:
+        try:
             destination_folder_picker.value = e.path
             verify(destination_folder_picker.value, "Pasta de destino", "a")
             return destination_folder_picker.value
+        except Exception:
+            open_Snack_Bar(page, "Houve um erro ao selecionar a pasta de destino. Tente novamente.", bgcolor="orange")
         
     def open_Snack_Bar(page: Page, message: str, bgcolor: str):
         page.snack_bar = SnackBar(Text(message), bgcolor=bgcolor)
         page.snack_bar.open = True
         page.update()
-    
+
     def start_process():
         try:
             open_Snack_Bar(page, "Criando relatórios...", bgcolor="blue")
             progress = progress_ring(page)
             progress()
-            main(sheet_picker.result.files[0].path, destination_folder_picker.value, template_picker.result.files[0].path)
-            sleep(1)
-            del progress
-            open_Snack_Bar(page, "Relatórios criados com sucesso!", bgcolor="green")
-        except Exception:
-            sleep(1)
-            del progress
-            open_Snack_Bar(page, "Ocorreu um erro ao criar os relatórios. Tente novamente.", bgcolor="red")
+            main_result = main(sheet_picker.result.files[0].path, destination_folder_picker.value, template_picker.result.files[0].path)
+
+            if main_result:
+                open_Snack_Bar(page, "Relatórios criados com sucesso!", bgcolor="green")
+            else:
+                open_Snack_Bar(page, "Erro: Relatórios não foram criados corretamente.", bgcolor="red")
+        except Exception as e:
+            print(f"Erro: {e}")
             
 
     def verify(selected_file, type: str, char: str):
         if selected_file != None:
             txt.value = f"{type} selecionad{char}!"
         else:
-            txt.value = "Houve um erro ao selecionar o arquivo. Tente novamente."
-
-        open_Snack_Bar(page, txt.value, bgcolor="blue")
+            txt.value = f"{type} não selecionad{char}!"
 
     txt = Text("")
 
