@@ -38,7 +38,7 @@ class ReportGenerator:
 
             advisors_reports[advisor] = advisors_reports.get(advisor, 0) + 1
 
-        statistics_file_path = os.path.join(self.output_folder, "statistics.txt")
+        statistics_file_path = os.path.join(self.output_folder, "feedback.txt")
 
         with open(statistics_file_path, 'w') as file:
             for advisor, clients in advisors_clients.items():
