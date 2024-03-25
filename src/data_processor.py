@@ -73,10 +73,10 @@ class DataProcessor:
             nome=nome,
             periodo=periodo,
             rentabilidade_mes=round(float(rentabilidade_mes) * 100, 2),
-            performance_cdi_ultimo_mes=round(float(performance_cdi_ultimo_mes), 2),
+            performance_cdi_ultimo_mes=round(float(performance_cdi_ultimo_mes)),
             balanco_mes=self.format_BRL_currency(float(balanco_mes)),
             rentabilidade_acumulada=round(float(rentabilidade_acumulada) * 100, 2),
-            performance_cdi_acumulada=round(float(performance_cdi_acumulada), 2),
+            performance_cdi_acumulada=round(float(performance_cdi_acumulada)),
             balanco_acumulado=self.format_BRL_currency(float(balanco_acumulado))
         )
         return text
