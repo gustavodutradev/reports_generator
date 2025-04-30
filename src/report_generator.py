@@ -1,8 +1,9 @@
 import os
-from src.data_processor import DataProcessor
-from docx import Document
-import pandas as pd
 import re
+from datetime import datetime
+import pandas as pd
+from docx import Document
+from src.data_processor import DataProcessor
 from src.utils.cache_relations import carregar_mapas_relacionamento
 
 
@@ -19,14 +20,11 @@ class ReportGenerator:
 
     def generate_statistics(self, total_clients, total_reports, advisors_info):
         statistics_file_path = os.path.join(self.output_folder, "feedback.txt")
-
-        with open(statistics_file_path, "w") as file:
+        with open(statistics_file_path, "w", encoding="utf-8") as file:
             for advisor, info in advisors_info.items():
                 file.write(f"Assessor: {advisor}\n")
                 file.write(f"Quantidade de clientes: {len(info['clientes'])}\n")
-                file.write(
-                    f"Quantidade de relatórios gerados: {info['relatorios']}\n\n"
-                )
+                file.write(f"Quantidade de relatórios gerados: {info['relatorios']}\n\n")
 
             if total_clients != total_reports:
                 file.write(
@@ -41,70 +39,72 @@ class ReportGenerator:
         print(f"Estatísticas geradas e salvas em: {statistics_file_path}")
 
     def save_report(self):
-        if self.data is not None:
+        if self.data is None or self.data.empty:
+            raise ValueError("DataFrame vazio ou None.")
+
+        existing = set()
+        total_clients = 0
+        advisors_info = {}
+
+        for _, row in self.data.iterrows():
+            raw_nr = row.get("nr_conta")
+            if pd.isna(raw_nr):
+                self.failed_reports.append(raw_nr)
+                continue
             try:
-                existing_files = {}
-                total_clients = 0
-                advisors_info = {}
+                conta_int = int(raw_nr)
+            except (ValueError, TypeError):
+                self.failed_reports.append(raw_nr)
+                continue
 
-                for _, item in self.data.iterrows():
-                    conta = str(item.get("cod_carteira")).zfill(9)
-                    nome_raw = self.mapa_clientes.get(conta, "Cliente")
-                    nome_partes = nome_raw.split()[:2]
-                    nome_cliente = " ".join(p.capitalize() for p in nome_partes)
-                    assessor = self.mapa_assessores.get(conta, "Assessor")
+            conta = f"{conta_int:09d}"
 
-                    if not nome_cliente or not assessor:
-                        print(
-                            f"Ignorando linha com conta {conta} por dados incompletos."
-                        )
-                        continue
+            nome_raw = self.mapa_clientes.get(conta)
+            assessor = self.mapa_assessores.get(conta)
+            if not nome_raw or not assessor:
+                self.failed_reports.append(conta)
+                continue
 
-                    data_processor = DataProcessor(self.data, self.template_text)
-                    client_text = data_processor.generate_customer_report(item, nome_cliente)
+            parts = nome_raw.split()
+            nome_arquivo = " ".join(p.capitalize() for p in parts[:2])
+            nome_texto = parts[0].capitalize()
 
-                    periodo = data_processor.get_reference_date()
-                    ano_referencia, mes_referencia = periodo[1], periodo[2]
+            # Gera o texto do relatório
+            dp = DataProcessor(self.data, self.template_text)
+            texto = dp.generate_customer_report(row, nome_texto)
 
-                    # Estrutura de pastas
-                    folder_path = os.path.join(
-                        self.output_folder,
-                        assessor,
-                        f"{ano_referencia}.{mes_referencia}",
-                    )
-                    os.makedirs(folder_path, exist_ok=True)
+            # Pasta de período (ex: "2025.03")
+            _, ano_ref, mes_ref = dp.get_reference_date()
+            mes_str = f"{mes_ref:02d}"
+            period_folder = f"{ano_ref}.{mes_str}"
 
-                    file_name = self.clean_filename(
-                        f"{nome_cliente}_Performance_{ano_referencia}_{mes_referencia}.docx"
-                    )
-                    file_path = os.path.join(folder_path, file_name)
+            # Cria o diretório: output/Assessor/2025.03/
+            pasta = os.path.join(self.output_folder, assessor, period_folder)
+            os.makedirs(pasta, exist_ok=True)
 
-                    if file_name in existing_files:
-                        file_name = self.clean_filename(
-                            f"{nome_cliente}_{conta}_Performance_{ano_referencia}_{mes_referencia}.docx"
-                        )
-                        file_path = os.path.join(folder_path, file_name)
+            # Nome do arquivo
+            base_name = f"{nome_arquivo}_{conta}_Performance_{ano_ref}_{mes_str}.docx"
+            safe_name = self.clean_filename(base_name)
+            full_path = os.path.join(pasta, safe_name)
 
-                    existing_files[file_name] = True
+            # Evita sobrescrever
+            if full_path in existing:
+                suffix = datetime.now().strftime("%H%M%S")
+                safe_name = safe_name.replace(".docx", f"_{suffix}.docx")
+                full_path = os.path.join(pasta, safe_name)
+            existing.add(full_path)
 
-                    doc = Document()
-                    run = doc.add_paragraph().add_run(client_text)
-                    run.font.name = "Arial"
-                    doc.save(file_path)
+            # Salva o documento
+            doc = Document()
+            doc.add_paragraph(texto)
+            doc.save(full_path)
 
-                    # Estatísticas
-                    total_clients += 1
-                    if assessor not in advisors_info:
-                        advisors_info[assessor] = {"clientes": set(), "relatorios": 0}
-                    advisors_info[assessor]["clientes"].add((nome_cliente, conta))
-                    advisors_info[assessor]["relatorios"] += 1
+            total_clients += 1
+            advisors_info.setdefault(assessor, {"clientes": set(), "relatorios": 0})
+            advisors_info[assessor]["clientes"].add(conta)
+            advisors_info[assessor]["relatorios"] += 1
 
-                total_reports = len(existing_files)
-                self.generate_statistics(total_clients, total_reports, advisors_info)
-
-            except Exception as e:
-                raise Exception(f"Erro ao criar relatórios: {e}")
-        else:
-            raise ValueError("Dados não encontrados no arquivo.")
-
-        print(f"Relatórios gerados com sucesso!")
+        # Finaliza com estatísticas
+        self.generate_statistics(total_clients, len(existing), advisors_info)
+        print("Relatórios criados com sucesso!")
+        return True
