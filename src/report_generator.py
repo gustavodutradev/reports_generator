@@ -79,7 +79,7 @@ class ReportGenerator:
             period_folder = f"{ano_ref}.{mes_str}"
 
             # Cria o diretório: output/Assessor/2025.03/
-            pasta = os.path.join(self.output_folder, assessor, period_folder)
+            pasta = os.path.join(self.output_folder, assessor.strip(), period_folder)
             os.makedirs(pasta, exist_ok=True)
 
             # Nome do arquivo
